@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Grant Team Access
-        uses: la-actions/add-team-to-repo@v1.0.0
+        uses: lee-lott/add-team-to-repo@v1.0.0
         with:
           team-name: ${{ github.event.inputs.team-name }}
           role: ${{ github.event.inputs.role }}
