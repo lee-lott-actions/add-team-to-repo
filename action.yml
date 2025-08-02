@@ -1,6 +1,6 @@
 name: Grant Team Access to Repository
 description: Grants a team access to a repository with a specified role
-author: Louisiana Office of Technology Services
+author: Lee Lott
 
 inputs:
   team-name:
