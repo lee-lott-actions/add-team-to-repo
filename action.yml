@@ -1,0 +1,38 @@
+name: Grant Team Access to Repository
+description: Grants a team access to a repository with a specified role
+author: Louisiana Office of Technology Services
+
+inputs:
+  team-name:
+    description: 'The slug of the team to grant access'
+    required: true
+  role:
+    description: 'The role to assign (e.g., pull, push, admin, maintain, triage)'
+    required: true
+  owner:
+    description: 'The organization or user that owns the repository'
+    required: true
+  repo-name:
+    description: 'The name of the repository'
+    required: true
+  token:
+    description: 'GitHub token with permissions to manage team access'
+    required: true
+
+outputs:
+  result:
+    description: 'Result of the team creation operation ("success" or "failure")'
+    value: ${{ steps.action.outputs.result }}
+  error-message:
+    description: 'Error message if the team creation operation fails'
+    value: ${{ steps.action.outputs.error-message }}
+
+runs:
+  using: composite
+  steps:
+    - name: Grant Team Access
+      id: action
+      run: |
+        source ${{ github.action_path }}/action.sh
+        grant_team_access_to_repo "${{ inputs.team-name }}" "${{ inputs.role }}" "${{ inputs.owner }}" "${{ inputs.repo-name }}" "${{ inputs.token }}"
+      shell: bash
