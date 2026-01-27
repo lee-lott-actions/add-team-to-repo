@@ -39,7 +39,7 @@ Describe "Add-TeamToRepo" {
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Forbidden"
         $envWarn = Get-Content $env:GITHUB_ENV
-        $envWarn | Should -Contain "Warning: Failed to assign admin role to team test-team: Forbidden"
+        $envWarn | Should -Contain "Warning: Failed to assign admin role to test-team team: Forbidden"
     }
 
     It "fails with HTTP 404" {
@@ -51,7 +51,7 @@ Describe "Add-TeamToRepo" {
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Not Found"
         $envWarn = Get-Content $env:GITHUB_ENV
-        $envWarn | Should -Contain "Warning: Failed to assign admin role to team test-team: Not Found"
+        $envWarn | Should -Contain "Warning: Failed to assign admin role to test-team team: Not Found"
     }
 
     It "fails with empty team_slug" {
