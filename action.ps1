@@ -40,7 +40,7 @@ function Add-TeamToRepo {
     try {
         $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -Body $jsonBody
 
-        Write-Host "Grant Team Access API Response Code for $TeamSlug: $($response.StatusCode)"
+        Write-Host "Grant Team Access API Response Code for $TeamSlug team: $($response.StatusCode)"
         Write-Host $response.Content
 
         if ($response.StatusCode -eq 204) {
@@ -52,8 +52,8 @@ function Add-TeamToRepo {
                 $errorJson = $response.Content | ConvertFrom-Json
                 $errorMessage = $errorJson.message
             } catch { $errorMessage = $response.Content }
-            Write-Host "Warning: Failed to assign $Role role to team $TeamSlug: $errorMessage"
-            Add-Content -Path $env:GITHUB_ENV -Value "Warning: Failed to assign $Role role to team $TeamSlug: $errorMessage"
+            Write-Host "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
+            Add-Content -Path $env:GITHUB_ENV -Value "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
             Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMessage"
             Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
         }
@@ -68,8 +68,8 @@ function Add-TeamToRepo {
                 $errorMessage = $errorJson.message
             } catch { $errorMessage = $content }
         }
-        Write-Host "Warning: Failed to assign $Role role to team $TeamSlug: $errorMessage"
-        Add-Content -Path $env:GITHUB_ENV -Value "Warning: Failed to assign $Role role to team $TeamSlug: $errorMessage"
+        Write-Host "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
+        Add-Content -Path $env:GITHUB_ENV -Value "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
         Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMessage"
         Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
     }

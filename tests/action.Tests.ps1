@@ -21,7 +21,7 @@ Describe "Add-TeamToRepo" {
         Remove-Variable -Name MOCK_API -Scope Global -ErrorAction SilentlyContinue
     }
 
-    It "unit: grant_team_access_to_repo succeeds with HTTP 204" {
+    It "succeeds with HTTP 204" {
         Mock Invoke-WebRequest {
             [PSCustomObject]@{ StatusCode = 204; Content = '{}' }
         }
@@ -30,7 +30,7 @@ Describe "Add-TeamToRepo" {
         $output | Should -Contain "result=success"
     }
 
-    It "unit: grant_team_access_to_repo fails with HTTP 403" {
+    It "fails with HTTP 403" {
         Mock Invoke-WebRequest {
             [PSCustomObject]@{ StatusCode = 403; Content = '{"message": "Forbidden"}' }
         }
@@ -42,7 +42,7 @@ Describe "Add-TeamToRepo" {
         $envWarn | Should -Contain "Warning: Failed to assign admin role to team test-team: Forbidden"
     }
 
-    It "unit: grant_team_access_to_repo fails with HTTP 404" {
+    It "fails with HTTP 404" {
         Mock Invoke-WebRequest {
             [PSCustomObject]@{ StatusCode = 404; Content = '{"message": "Not Found"}' }
         }
@@ -54,35 +54,35 @@ Describe "Add-TeamToRepo" {
         $envWarn | Should -Contain "Warning: Failed to assign admin role to team test-team: Not Found"
     }
 
-    It "unit: grant_team_access_to_repo fails with empty team_slug" {
+    It "fails with empty team_slug" {
         Add-TeamToRepo -TeamSlug "" -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
     }
 
-    It "unit: grant_team_access_to_repo fails with empty role" {
+    It "fails with empty role" {
         Add-TeamToRepo -TeamSlug $TeamSlug -Role "" -Owner $Owner -RepoName $RepoName -Token $Token
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
     }
 
-    It "unit: grant_team_access_to_repo fails with empty owner" {
+    It "fails with empty owner" {
         Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner "" -RepoName $RepoName -Token $Token
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
     }
 
-    It "unit: grant_team_access_to_repo fails with empty repo_name" {
+    It "with empty repo_name" {
         Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName "" -Token $Token
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
     }
 
-    It "unit: grant_team_access_to_repo fails with empty token" {
+    It "fails with empty token" {
         Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token ""
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
