@@ -37,9 +37,7 @@ Describe "Add-TeamToRepo" {
         Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Forbidden"
-        $envWarn = Get-Content $env:GITHUB_ENV
-        $envWarn | Should -Contain "Warning: Failed to assign admin role to test-team team: Forbidden"
+        $output | Should -Contain "error-message=Error: Failed to assign $Role role to $TeamSlug team. HTTP Status: 403"
     }
 
     It "fails with HTTP 404" {
@@ -49,9 +47,7 @@ Describe "Add-TeamToRepo" {
         Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
         $output = Get-Content $env:GITHUB_OUTPUT
         $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Not Found"
-        $envWarn = Get-Content $env:GITHUB_ENV
-        $envWarn | Should -Contain "Warning: Failed to assign admin role to test-team team: Not Found"
+        $output | Should -Contain "error-message=Error: Failed to assign $Role role to $TeamSlug team. HTTP Status: 404"
     }
 
     It "fails with empty team_slug" {
@@ -88,4 +84,17 @@ Describe "Add-TeamToRepo" {
         $output | Should -Contain "result=failure"
         $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
     }
+	
+	It "writes result=failure and error-message on exception" {
+		Mock Invoke-WebRequest { throw "API Error" }
+
+		try {
+			Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+		} catch {}
+
+		$output = Get-Content $env:GITHUB_OUTPUT
+		$output | Should -Contain "result=failure"
+		$output | Where-Object { $_ -match "^error-message=Error: Failed to assign $Role role to $TeamSlug team\. Exception:" } |
+			Should -Not -BeNullOrEmpty
+	}
 }
