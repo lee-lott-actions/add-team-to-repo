@@ -5,7 +5,6 @@ This GitHub Action grants a specified team access to a repository with a given r
 ## Features
 - Assigns a team to a repository with a specified permission role.
 - Provides outputs for success/failure status and error messages.
-- Uses `jq` for parsing API responses.
 - Handles errors gracefully with detailed logging.
 
 ## Inputs

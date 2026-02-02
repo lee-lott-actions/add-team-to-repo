@@ -47,30 +47,15 @@ function Add-TeamToRepo {
             Write-Host "Successfully assigned $Role role to team $TeamSlug"
             Add-Content -Path $env:GITHUB_OUTPUT -Value "result=success"
         } else {
-            $errorMessage = ""
-            try {
-                $errorJson = $response.Content | ConvertFrom-Json
-                $errorMessage = $errorJson.message
-            } catch { $errorMessage = $response.Content }
-            Write-Host "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
-            Add-Content -Path $env:GITHUB_ENV -Value "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMessage"
+			$errorMsg = "Error: Failed to assign $Role role to $TeamSlug team. HTTP Status: $($response.StatusCode)" 
+			Write-Host $errorMsg
             Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
+			Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMsg"
         }
-    } catch {
-        $errorMessage = ""
-        if ($_.Exception.Response -and $_.Exception.Response.GetResponseStream()) {
-            $reader = New-Object System.IO.StreamReader $_.Exception.Response.GetResponseStream()
-            $content = $reader.ReadToEnd()
-            $reader.Close()
-            try {
-                $errorJson = $content | ConvertFrom-Json
-                $errorMessage = $errorJson.message
-            } catch { $errorMessage = $content }
-        }
-        Write-Host "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
-        Add-Content -Path $env:GITHUB_ENV -Value "Warning: Failed to assign $Role role to $TeamSlug team: $errorMessage"
-        Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMessage"
-        Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
+    } catch {		
+		$errorMsg = "Error: Failed to assign $Role role to $TeamSlug team. Exception: $($_.Exception.Message)"
+		Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
+		Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMsg"
+		Write-Host $errorMsg
     }
 }
