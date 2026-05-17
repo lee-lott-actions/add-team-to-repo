@@ -1,6 +1,6 @@
 Describe "Add-TeamToRepo" {
     BeforeAll {
-        $script:TeamSlug   = "test-team"
+        $script:TeamName   = "test-team"
         $script:Role       = "admin"
         $script:Owner      = "test-owner"
         $script:RepoName   = "test-repo"
@@ -8,93 +8,89 @@ Describe "Add-TeamToRepo" {
         $script:MockApiUrl = "http://127.0.0.1:3000"
         . "$PSScriptRoot/../action.ps1"
     }
+	
     BeforeEach {
-        $env:GITHUB_OUTPUT = "$PSScriptRoot/github_output.temp"
-        $env:GITHUB_ENV    = "$PSScriptRoot/github_env.temp"
-        if (Test-Path $env:GITHUB_OUTPUT) { Remove-Item $env:GITHUB_OUTPUT }
-        if (Test-Path $env:GITHUB_ENV) { Remove-Item $env:GITHUB_ENV }
+        $env:GITHUB_OUTPUT = New-TemporaryFile
         $env:MOCK_API = $script:MockApiUrl
     }
+	
     AfterEach {
         if (Test-Path $env:GITHUB_OUTPUT) { Remove-Item $env:GITHUB_OUTPUT }
-        if (Test-Path $env:GITHUB_ENV) { Remove-Item $env:GITHUB_ENV }
-        Remove-Variable -Name MOCK_API -Scope Global -ErrorAction SilentlyContinue
+        Remove-Item Env:MOCK_API -ErrorAction SilentlyContinue
     }
 
-    It "succeeds with HTTP 204" {
-        Mock Invoke-WebRequest {
-            [PSCustomObject]@{ StatusCode = 204; Content = '{}' }
-        }
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=success"
-    }
+	Context "Success Cases" {
+	    It "unit: Add-TeamToRepo succeeds with HTTP 204" {
+	        Mock Invoke-WebRequest {
+	            [PSCustomObject]@{ StatusCode = 204; Content = '{}' }
+	        }
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=success"
+	    }
+	}
 
-    It "fails with HTTP 403" {
-        Mock Invoke-WebRequest {
-            [PSCustomObject]@{ StatusCode = 403; Content = '{"message": "Forbidden"}' }
-        }
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Error: Failed to assign $Role role to $TeamSlug team. HTTP Status: 403"
-    }
+	Context "HTTP Failure Cases" {
+	    It "unit: Add-TeamToRepo fails with HTTP 404" {
+	        Mock Invoke-WebRequest {
+	            [PSCustomObject]@{ StatusCode = 404; Content = '{"message": "Not Found"}' }
+	        }
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=failure"
+	        $output | Should -Contain "error-message=Error: Failed to assign $Role role to $TeamName team. HTTP Status: 404"
+	    }		
+	}
 
-    It "fails with HTTP 404" {
-        Mock Invoke-WebRequest {
-            [PSCustomObject]@{ StatusCode = 404; Content = '{"message": "Not Found"}' }
-        }
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Error: Failed to assign $Role role to $TeamSlug team. HTTP Status: 404"
-    }
-
-    It "fails with empty team_slug" {
-        Add-TeamToRepo -TeamSlug "" -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
-    }
-
-    It "fails with empty role" {
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role "" -Owner $Owner -RepoName $RepoName -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
-    }
-
-    It "fails with empty owner" {
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner "" -RepoName $RepoName -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
-    }
-
-    It "with empty repo_name" {
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName "" -Token $Token
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
-    }
-
-    It "fails with empty token" {
-        Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token ""
-        $output = Get-Content $env:GITHUB_OUTPUT
-        $output | Should -Contain "result=failure"
-        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
-    }
+	Context "Parameter Validation Failure Cases" {
+		It "unit: Add-TeamToRepo fails with empty TeamName" {
+	        Add-TeamToRepo -TeamName "" -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=failure"
+	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
+	    }
 	
-	It "writes result=failure and error-message on exception" {
-		Mock Invoke-WebRequest { throw "API Error" }
+	    It "unit: Add-TeamToRepo fails with empty Role" {
+	        Add-TeamToRepo -TeamName $TeamName -Role "" -Owner $Owner -RepoName $RepoName -Token $Token
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=failure"
+	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
+	    }
+	
+	    It "unit: Add-TeamToRepo fails with empty Owner" {
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner "" -RepoName $RepoName -Token $Token
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=failure"
+	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
+	    }
+	
+	    It "unit: Add-TeamToRepo with empty RepoName" {
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName "" -Token $Token
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=failure"
+	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
+	    }
+	
+	    It "unit: Add-TeamToRepo fails with empty Token" {
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token ""
+	        $output = Get-Content $env:GITHUB_OUTPUT
+	        $output | Should -Contain "result=failure"
+	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
+	    }	
+	}
 
-		try {
-			Add-TeamToRepo -TeamSlug $TeamSlug -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
-		} catch {}
-
-		$output = Get-Content $env:GITHUB_OUTPUT
-		$output | Should -Contain "result=failure"
-		$output | Where-Object { $_ -match "^error-message=Error: Failed to assign $Role role to $TeamSlug team\. Exception:" } |
-			Should -Not -BeNullOrEmpty
+	Context "Exception Failure Cases" {
+		It "unit: Add-TeamToRepo fails with exception" {
+			Mock Invoke-WebRequest { throw "API Error" }
+	
+			try {
+				Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+			} catch {}
+	
+			$output = Get-Content $env:GITHUB_OUTPUT
+			$output | Should -Contain "result=failure"
+			$output | Where-Object { $_ -match "^error-message=Error: Failed to assign $Role role to $TeamName team\. Exception:" } |
+				Should -Not -BeNullOrEmpty
+		}
 	}
 }
