@@ -1,6 +1,6 @@
 function Add-TeamToRepo {
     param(
-        [string]$TeamSlug,
+        [string]$TeamName,
         [string]$Role,
         [string]$Owner,
         [string]$RepoName,
@@ -8,7 +8,7 @@ function Add-TeamToRepo {
     )
 
     # Validate required parameters
-    if ([string]::IsNullOrEmpty($TeamSlug) -or
+    if ([string]::IsNullOrEmpty($TeamName) -or
         [string]::IsNullOrEmpty($Role) -or
         [string]::IsNullOrEmpty($Owner) -or
         [string]::IsNullOrEmpty($RepoName) -or
@@ -17,14 +17,12 @@ function Add-TeamToRepo {
         Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
         Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
         return
-    }
-
-    Write-Host "Assigning $Role role to team $TeamSlug for repo $Owner/$RepoName"
+    }   
 
     # Use MOCK_API if set, otherwise default to GitHub API
     $apiBaseUrl = $env:MOCK_API
     if (-not $apiBaseUrl) { $apiBaseUrl = "https://api.github.com" }
-    $uri = "$apiBaseUrl/orgs/$Owner/teams/$TeamSlug/repos/$Owner/$RepoName"
+    $uri = "$apiBaseUrl/orgs/$Owner/teams/$TeamName/repos/$Owner/$RepoName"
 
     $headers = @{
         Authorization = "Bearer $Token"
@@ -33,27 +31,25 @@ function Add-TeamToRepo {
         "Content-Type" = "application/json"
     }
 
-    $jsonBody = @{
+    $body = @{
         permission = $Role
     } | ConvertTo-Json
 
     try {
-        $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -Body $jsonBody
-
-        Write-Host "Grant Team Access API Response Code for $TeamSlug team: $($response.StatusCode)"
-        Write-Host $response.Content
+		Write-Host "Assigning $Role role to team $TeamName for repo $Owner/$RepoName"
+        $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method Put -Body $body -SkipHttpErrorCheck
 
         if ($response.StatusCode -eq 204) {
-            Write-Host "Successfully assigned $Role role to team $TeamSlug"
+            Write-Host "Successfully assigned $Role role to team $TeamName"
             Add-Content -Path $env:GITHUB_OUTPUT -Value "result=success"
         } else {
-			$errorMsg = "Error: Failed to assign $Role role to $TeamSlug team. HTTP Status: $($response.StatusCode)" 
+			$errorMsg = "Error: Failed to assign $Role role to $TeamName team. HTTP Status: $($response.StatusCode)" 
 			Write-Host $errorMsg
             Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
 			Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMsg"
         }
     } catch {		
-		$errorMsg = "Error: Failed to assign $Role role to $TeamSlug team. Exception: $($_.Exception.Message)"
+		$errorMsg = "Error: Failed to assign $Role role to $TeamName team. Exception: $($_.Exception.Message)"
 		Add-Content -Path $env:GITHUB_OUTPUT -Value "result=failure"
 		Add-Content -Path $env:GITHUB_OUTPUT -Value "error-message=$errorMsg"
 		Write-Host $errorMsg
