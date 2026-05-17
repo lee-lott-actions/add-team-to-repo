@@ -24,7 +24,7 @@ Describe "Add-TeamToRepo" {
 	        Mock Invoke-WebRequest {
 	            [PSCustomObject]@{ StatusCode = 204; Content = '{}' }
 	        }
-	        Add-TeamToRepo -TeamSlug $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=success"
 	    }
@@ -35,7 +35,7 @@ Describe "Add-TeamToRepo" {
 	        Mock Invoke-WebRequest {
 	            [PSCustomObject]@{ StatusCode = 404; Content = '{"message": "Not Found"}' }
 	        }
-	        Add-TeamToRepo -TeamSlug $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=failure"
 	        $output | Should -Contain "error-message=Error: Failed to assign $Role role to $TeamName team. HTTP Status: 404"
@@ -44,35 +44,35 @@ Describe "Add-TeamToRepo" {
 
 	Context "Parameter Validation Failure Cases" {
 		It "unit: Add-TeamToRepo fails with empty TeamName" {
-	        Add-TeamToRepo -TeamSlug "" -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+	        Add-TeamToRepo -TeamName "" -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=failure"
 	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
 	    }
 	
 	    It "unit: Add-TeamToRepo fails with empty Role" {
-	        Add-TeamToRepo -TeamSlug $TeamName -Role "" -Owner $Owner -RepoName $RepoName -Token $Token
+	        Add-TeamToRepo -TeamName $TeamName -Role "" -Owner $Owner -RepoName $RepoName -Token $Token
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=failure"
 	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
 	    }
 	
 	    It "unit: Add-TeamToRepo fails with empty Owner" {
-	        Add-TeamToRepo -TeamSlug $TeamName -Role $Role -Owner "" -RepoName $RepoName -Token $Token
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner "" -RepoName $RepoName -Token $Token
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=failure"
 	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
 	    }
 	
 	    It "unit: Add-TeamToRepo with empty RepoName" {
-	        Add-TeamToRepo -TeamSlug $TeamName -Role $Role -Owner $Owner -RepoName "" -Token $Token
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName "" -Token $Token
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=failure"
 	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
 	    }
 	
 	    It "unit: Add-TeamToRepo fails with empty Token" {
-	        Add-TeamToRepo -TeamSlug $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token ""
+	        Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token ""
 	        $output = Get-Content $env:GITHUB_OUTPUT
 	        $output | Should -Contain "result=failure"
 	        $output | Should -Contain "error-message=Missing required parameters: team_slug, repo_name, role, owner, and token must be provided."
@@ -84,7 +84,7 @@ Describe "Add-TeamToRepo" {
 			Mock Invoke-WebRequest { throw "API Error" }
 	
 			try {
-				Add-TeamToRepo -TeamSlug $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
+				Add-TeamToRepo -TeamName $TeamName -Role $Role -Owner $Owner -RepoName $RepoName -Token $Token
 			} catch {}
 	
 			$output = Get-Content $env:GITHUB_OUTPUT
